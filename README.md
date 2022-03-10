@@ -1,11 +1,21 @@
 # Arch-linux
 
+Hello there! So, do you wanna install Arch-linux without die in the try? 
+...well that's the reason why I made this repo, here you'll find out step by step how is the installation process of Arch Linux, 
+and also you'll can see my personal settings (I do use tilling window managers like I3 and BSPWM but if you just wanna install
+arch with a normal window manager just skip the extra steps) I hope you to find this repo usefull and never forget click in the star button! Hehehe
+
+<img src="./img/arch.jpg"/>
+
 # Table of Contents
 
-- [Overview](#overview)
 - [Arch installation](#arch-installation)
+  - [Connecting the computer to the internet](#connecting-the-computer-to-the-internet)
+  - [Creating the hard disk partitions for the system](#creating-the-hard-disk-partitions)
+  - [Mounting the system](#mounting-the-system)
+  - [Installing requeriments of the system](#installing-requieriments-of-the-system)
 - [Login and window manager](#login-and-window-manager)
-- [Basic qtile configuration](#basic-qtile-configuration)
+- [Basic I3 configuration](#basic-i3-configuration)
 - [Basic system utilities](#basic-system-utilities)
   - [Wallpaper](#wallpaper)
   - [Fonts](#fonts)
@@ -28,48 +38,145 @@
     - [Images](#images)
     - [Video and audio](#video-and-audio)
   
-# Overview
-
-This guide will walk you through the process of building a desktop environment
-starting with a fresh Arch based installation. I will assume that you are
-comfortable with Linux based operating systems and command line interfaces.
-Because you are reading this, I will also assume that you've looked through some
-"tiling window manager" videos on Youtube, because that's where the rabbit hole
-starts. You can pick any window managers you want, but I'm going to use Qtile
-as a first tiling window manager because that's what I started with. This is
-basically a description of how I made my desktop environment from scratch.
 
 # Arch installation
+First of all for the installation you'll need the image ISO of the OS into an USB booteable, then set off your machine and start the boot process with the USB, then you'll see a black terminal, and there is where we gonna work, don't be scared, the process is not as complicate as you think, just follow step by step the guide and everything's gonna be okay.
 
-The starting point of this guide is right after a complete clean Arch based
-distro installation. The
-**[Arch Wiki](https://wiki.archlinux.org/index.php/Installation_guide)**
-doesn't tell you what to do after setting the root password, it suggests installing
-a bootloader, but before that I would make sure to have working internet:
-
-```bash
-pacman -S networkmanager
-systemctl enable NetworkManager
+If you're not comfortable using the American keyboard you can change it for the installation with this command:
+```
+//Here "es" is the language of the keyboard!
+$ loadkeys es
 ```
 
-Now you can install a bootloader and test it "safely", this is how to do it on
-modern hardware,
-[assuming you've mounted the efi partition on /boot](https://wiki.archlinux.org/index.php/Installation_guide#Example_layouts):
+## Connecting the computer to the internet
+So, to start with the installation process we need to have an internet connection, and for do that you have two options:
+- Connecting your computer to an ethernet cable.
+- Connecting your computer to a wifi network.
+If you choose the first one option you won't need to do anymore, you already will have internet connection and you can verify it with the command:
+```
+//If you get a result of the connection with the google's servers so, that means that you already have internet connection
+$ ping google.com
+```
+If you choose the second to option, you have to follow this steps:
 
-```bash
-pacman -S grub efibootmgr os-prober
-grub-install --target=x86_64-efi --efi-directory=/boot
-os-prober
-grub-mkconfig -o /boot/grub/grub.cfg
+- Verify if your network board is active with the command:
+```
+$ ip link
+```
+If it isn't so active it with the command:
+```
+$ ip link set network-board-name up
+```
+- Now scan the networks in your area to find your wifi network with this command:
+```
+$ iwlist network-board-name scan
+```
+Now you have to connect to your wifi network, If your wifi network doesn't have any security protocol (Password) you can connect your computer to it with this command:
+```
+$ iwconfig network-board-name essid wifi-network-name
+```
+But if your wifi network does have a security protocol, you have to use one of this commands depending of the kind of protocol your network is.
+- WEP network:
+```
+$ iwconfig network-board-name essid wifi-network-name key:password of the network
+```
+- WPA network:
+```
+$ wpa_passphrase wifi-name-network wifi-password > /etc/wifi
+//To verify that the data has been saved use the command:
+$ cat etc/wifi
+//Now stablish the connection with the network
+$ wpa_supplicant -B -i network-board-name -D wext -c /etc/wifi
+
+$ dhclient
+//Now verify that you're already connected to the internet
+$ ping google.com
 ```
 
-Now you can create your user:
-
-```bash
-useradd -m username
-passwd username
-usermod -aG wheel,video,audio,storage username
+## Creating the hard disk partitions for the system
+Ok, to make your hard disk partition for the system, you gotta know which is the storage where you want to install Arch, so to list all the storage drivers of your machine use the command: 
 ```
+
+$ fdisk -l
+```
+There you gonna see a list of drivers, and probably your local hard disk is called "sda"
+so to open your hard disk to make the partitions use this command:
+```
+$ fdisk /dev/sda
+```
+Okay, now you might gotta use the following sytem of commands to establish your table of partitions where gonna live your Arch:
+
+| Key                  | Action                     |
+| -------------------- | -------------------------- |
+| **o**                | creates a new table        |
+| **n**                | creates a new partition    |
+| **p**                | show existent partitions   |
+| **d**                | delete a partition         |
+
+Establish the partition **sda1** as the primary partition where gonna live the Linux system (Root partition).
+Now **sda2** as a secondary partition, this one gonna be the "Home" of your system, where gonna be your personal data.
+And the third one is optional, it's called a **swap** partition and in this case gonna be the **sda3** partition.
+
+**The storage assigned of each partition it's your personal desition based on the capacity of you hard disk**
+But I could recommend you assign at least 20gb of space to the Root partition and the rest to Home.
+
+Now press the letter **a** and then the number **1** for select **sda1** as your starting partition, and also press **t**  and then **L** and choose the number 82 to make **sda3** the swap partition. And finally press **w** to left the hard disk configuration.
+
+## Mounting the system
+- Mounting the Root partition:
+```
+$ mkfs.ext4 /dev/sda1
+$ mount /dev/sda1 /mnt
+```
+- Mounting the Home partition:
+```
+$ mkfs.ext4 /dev/sda2
+$ mkadir /mnt/home
+$ mount /dev/sda2 /mnt/home
+```
+- Mounting the swap partition:
+```
+$ mkswap /dev/sda3
+```
+## Installing the requieriments of the system
+
+List of packages to install for the minimun workable eviroment:
+- base
+- kernel: Linux-lts
+- linux-firmware
+- nano
+- grub
+- networkmanager
+- dhcpcd
+- netctl
+- wpa_supplicant
+- dialog
+
+With this command you gonna install Linux in the Root partition:
+```
+$ pacstrap /mnt base linux-lts linux-firmware nano grub networkmanager dhcpcd netctl wpa_supplicant dialog
+```
+## Last configurations of the system
+```
+$ genfstab /mnt >> /mnt/etc/fstab
+
+$ arch-chroot /mnt
+
+$ ln -sf /usr/share/zoneinfo/America/Caracas/etc/localetime
+$ nwclock --systoch
+$ echo "LANG=es_ES.UTF8" > /etc/locale.conf
+$ echo "KEYMAP=es" > /etc/vconsole.conf
+$ echo "Name-of-your-machine" > /etc/hostname
+$ useradd -m userName
+$ passwd userName 
+   set_your_password
+
+$ grub-install /dev/sda
+$ grub-mkconfig -o /boot/grub/grub.cfg
+$ mkinitcpio -P
+$ reboot now
+```
+And now you can disconnect the USB from the computer, and your Arch Linux should me already installed "Without graphic eviroment"
 
 In order to have root privileges we need sudo:
 
@@ -82,6 +189,8 @@ Edit **/etc/sudoers** with nano or vim by uncommenting this line:
 ```bash
 ## Uncomment to allow members of group wheel to execute any command
 # %wheel ALL=(ALL) ALL
+## Add:
+# userName ALL=(ALL) ALL
 ```
 
 Now you can reboot:
@@ -120,11 +229,10 @@ sudo pacman -S xorg
 
 First, we need to be able to login and open some programs like a browser and a
 terminal, so we'll start by installing **[lighdm](https://wiki.archlinux.org/index.php/LightDM)**
-and **[qtile](https://wiki.archlinux.org/index.php/Qtile)**. Lightdm will not
+I3. Lightdm will not
 work unless we install a **[greeter](https://wiki.archlinux.org/index.php/LightDM#Greeter)**.
 We also need
-**[xterm](https://wiki.archlinux.org/index.php/Xterm)** because that's the
-terminal emulator qtile will open by default, until we change the config file.
+**[xterm](https://wiki.archlinux.org/index.php/Xterm)**,
 Then, a text editor is necessary for editing config files, you can use
 **[vscode](https://wiki.archlinux.org/index.php/Visual_Studio_Code)** or jump
 straight into **[neovim](https://wiki.archlinux.org/index.php/Neovim)** if you
@@ -132,20 +240,20 @@ have previous experience, otherwise I wouldn't suggest it. Last but not least,
 we need a browser.
 
 ```bash
-sudo pacman -S lightdm lightdm-gtk-greeter qtile xterm code firefox
+sudo pacman -S lightdm lightdm-gtk-greeter i3 xterm code firefox
 ```
 
 Enable *lightdm* service and restart your computer, you should be able to log into
-Qtile through *lightdm*.
+I3 through *lightdm*.
 
 ```bash
 sudo systemctl enable lightdm
 reboot
 ```
 
-# Basic qtile configuration
+# Basic I3 configuration
 
-Now that you're in Qtile, you should know some of the default keybindings.
+Now that you're in I3, you should know some of the default keybindings.
 
 | Key                  | Action                     |
 | -------------------- | -------------------------- |
