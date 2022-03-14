@@ -5,7 +5,7 @@ Hello there! So, do you wanna install Arch-linux without die in the try?
 and also you'll can see my personal settings (I do use tilling window managers like I3 and BSPWM but if you just wanna install
 arch with a normal window manager just skip the extra steps) I hope you to find this repo usefull and never forget click in the star button! Hehehe
 
-<img src="./img/arch.jpg"/>
+<img src="./.img/arch.jpg"/>
 
 # Table of Contents
 
